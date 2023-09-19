@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Materiale scolastico - appunti</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pagina con il link al materiale scolastico">
+    <meta name="author" content="Francesco Belloni">
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <script>
+
+        // Global variables
+        let my_grade = "";
+        let my_year = "2022";
+        let my_subject = "Informatica";
+        let my_topic = "SER";
+
+        var url_json_database_folder = "/data/"
+        var json_lesson_response = {};
+        var status_fetch = false;
+        let lessons_clicked = [];
+
+        var question_template =
+            "<div class='module-sub-item p-3'>" +
+            "   <div class='row justify-content-between'>" +
+            "       <div class='col-9'>" +
+            "           <span class='theme-text-secondary me-2'>-</span>{question_text}" +
+            "       </div>" +
+            "       <div class='col-3 text-end extra-info'>{question_number}</div>" +
+            "   </div>" +
+            "</div>";
+
+        var template_box =
+            // Open Template
+            "<div class='module-item card'>" +
+
+            // Title
+            "   <div class='module-header card-header' id='module-heading-{lesson_id}' onclick='LoadLessionClick({lesson_id})' >" +
+            "    <h4 class='module-title mb-0'> " +
+            "        <a class='card-toggle module-toggle' href='#module-{lesson_id}' data-bs-toggle='collapse' data-bs-target='#module-{lesson_id}' aria-expanded='true' aria-controls='module-{lesson_id}'> " +
+            "            <i class='module-toggle-icon fas fa-plus me-2'></i>" +
+            "             {lesson_date} - {lesson_title}" +
+            "        </a>" +
+            "    </h4>" +
+            "   </div>" +
+
+            // Open Modulo collapse
+            "   <div id = 'module-{lesson_id}' class='module-content collapse' aria-labelledby='module-heading-{lesson_id}' >" +
+
+            // Open card
+            "       <div class='card-body p-0'> <br><br>" +
+
+            // Text
+            "           <div class='module-intro p-3' id={id_lesson_text}>" +
+            "               loading ... " +
+            "           </div>" +
+
+            "           <br><br>" +
+
+            // Question title
+            "           <div class='module-intro p-3'><i>Domande della lezione:</i></div>" +
+
+            // Questions
+            "           <div id={id_lesson_questions}>" +
+            "               loading ... " +
+            "           </div>" +
+
+            // Close card
+            "       </div>" +
+
+            // Close Modulo collapse
+            "   </div>" +
+
+            // Close Template
+            "</div>";
+
+    </script>
+
+    <style>
+        .cls-1 {
+            fill: none;
+            stroke: #ffffff;
+            stroke-miterlimit: 10;
+            stroke-width: 1.92px;
+        }
+
+        .module-item {
+            margin-top: 10px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a href="../index.html" class="navbar-brand d-flex align-items-center">
+                <svg width="20px" height="20px" viewBox="0 0 24 24" id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg">
+                    <rect class="cls-1" x="3.38" y="3.38" width="17.25" height="17.25" rx="2.18" />
+                    <rect class="cls-1" x="7.21" y="7.21" width="9.58" height="9.58" rx="1.92" />
+                    <line class="cls-1" x1="7.21" y1="0.5" x2="7.21" y2="2.42" />
+                    <line class="cls-1" x1="12" y1="0.5" x2="12" y2="2.42" />
+                    <line class="cls-1" x1="16.79" y1="0.5" x2="16.79" y2="2.42" />
+                    <line class="cls-1" x1="7.21" y1="21.58" x2="7.21" y2="23.5" />
+                    <line class="cls-1" x1="12" y1="21.58" x2="12" y2="23.5" />
+                    <line class="cls-1" x1="16.79" y1="21.58" x2="16.79" y2="23.5" />
+                    <line class="cls-1" x1="0.5" y1="16.79" x2="2.42" y2="16.79" />
+                    <line class="cls-1" x1="0.5" y1="12" x2="2.42" y2="12" />
+                    <line class="cls-1" x1="0.5" y1="7.21" x2="2.42" y2="7.21" />
+                    <line class="cls-1" x1="21.58" y1="16.79" x2="23.5" y2="16.79" />
+                    <line class="cls-1" x1="21.58" y1="12" x2="23.5" y2="12" />
+                    <line class="cls-1" x1="21.58" y1="7.21" x2="23.5" y2="7.21" />
+                </svg>
+                &nbsp;
+                <strong>{Diario Paolino Paperino}</strong>
+            </a>
+        </div>
+    </div>
+
+    <main>
+
+        <section class="py-5 text-center container">
+            <div class="row py-lg-5">
+                <div class="col-lg-6 col-md-8 mx-auto">
+                    <h1 class="fw-light">
+                        <span class="text-highlight pr-2">{</span>
+                        <span id="grade_title" class="name">...</span>
+                        <span class="text-highlight pl-2">}</span>
+                    </h1>
+                    <p class="lead text-body-secondary">
+                        <span id="subject_title" class="desc d-block">...</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <div class="album py-5 bg-body-tertiary">
+            <div class="sections-wrapper">
+                <div class="section-blocks mb-5">
+                    <div id="section-content" class="section-content section">
+                        <div class="container py-5">
+                            <h3 class="section-title mb-5">Lezioni</h3>
+                            <div class="accordion module-accordion" id="module-accordion">
+                                <div id="js"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a class="btn btn-primary scrollto" href="../index.html">Indietro</a>
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-eMNCOe7tC1doHpGoWe/6oMVemdAVTMs2xqW4mwXrXsW0L84Iytr2wi5v2QjrP/xp" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js" integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/" crossorigin="anonymous"></script>
+
+    <script>
+
+        function GetURLBase() {
+            var fullUrl = window.location.href;
+            var urlObject = new URL(fullUrl);
+            var baseUrl = urlObject.protocol + "//" + urlObject.host + urlObject.pathname.split("/").slice(0, -1).join("/") + "/";
+            console.log("baseUrl:" + baseUrl);
+            var stringToRemove = "/pages/";
+            var resultString = baseUrl.replace(stringToRemove, "");
+            return resultString;
+        }
+
+        // Load the lession text
+        function LoadLessonText(index_lesson, file_name) {
+
+            let url_to_fetch = GetURLBase() + "/data/" + my_year + "/" + my_topic + "/" + file_name;
+            console.log("LoadLessonText() > Try to read from url_to_fetch:" + url_to_fetch);
+
+            var id_text = "#lesson_text_" + index_lesson;
+
+            $.ajax({
+                url: url_to_fetch,
+                async: true,
+                success: function (output) {
+                    console.log("loading text ...");
+                    $(id_text).html(output);
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    console.error("An error occurred:", errorThrown);
+                    $(id_text).html("Si è verificato un errore durante il caricamento del testo.");
+                }
+            });
+
+        }
+
+        // Load questions
+        function LoadQuestions(index_lesson, file_name) {
+
+            let url_to_fetch = GetURLBase() + "/data/" + my_year + "/" + my_topic + "/" + file_name;
+            console.log("LoadLessonText() > Try to read from url_to_fetch:" + url_to_fetch);
+
+            var id_question = "#lesson_questions_" + index_lesson;
+            $(id_question).text("");
+
+            $.getJSON(url_to_fetch, function (data, status) {
+                console.log("Fetch lesson status is: " + status);
+                var count = Object.keys(data.questions).length;
+                for (let i = 0; i < count; i++) {
+                    let text = question_template;
+                    text = text.replace("{question_text}", data.questions[i].text);
+                    // where n is 0, 1, 2 ...
+                    var chr = String.fromCharCode(65 + i);
+                    text = text.replace("{question_number}", chr);
+                    $(id_question).append(text);
+                }
+            })
+                .fail(function (jqXHR, textStatus, errorThrown) {
+                    console.error("An error occurred:", errorThrown);
+                    $(id_question).text("Si è verificato un errore durante il caricamento delle domande.");
+                });
+        }
+
+        // Load all the lessions
+        $(document).ready(function () {
+
+            // https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+            const params = new Proxy(new URLSearchParams(window.location.search), {
+                get: (searchParams, prop) => searchParams.get(prop),
+            });
+
+            my_grade = params.grade;
+            my_subject = params.subject;
+            my_topic = params.topic;
+            my_year = params.year;
+
+            var file_name_lesson = my_year + "_" + my_grade + "_" + my_topic + ".json"
+            let url_file_name_lesson = GetURLBase() + "/data/" + file_name_lesson;
+            console.log("Try to read from url_file_name_lesson:" + url_file_name_lesson);
+
+            const capitalized = my_subject.charAt(0).toUpperCase() + my_subject.slice(1);
+            $('#grade_title').text(my_grade);
+            $('#subject_title').text(capitalized);
+
+            try {
+
+                $.getJSON(url_file_name_lesson, function (data, status) {
+                    json_lesson_response = data;
+                    status_fetch = status;
+                    var count = Object.keys(data.lessons).length;
+                    for (let i = 0; i < count; i++) {
+                        let text = template_box;
+                        text = text.replaceAll("{lesson_id}", "" + i);
+                        text = text.replace("{lesson_title}", json_lesson_response.lessons[i].title);
+                        text = text.replace("{lesson_date}", json_lesson_response.lessons[i].date);
+                        text = text.replaceAll("{id_lesson_text}", "lesson_text_" + i);
+                        text = text.replace("{id_lesson_questions}", "lesson_questions_" + i);
+                        $('#js').append(text);
+                    }
+                })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        $('#js').text("Si è verificato un errore durante il caricamento delle lezioni.");
+                        console.error("An error occurred:", errorThrown);
+                    });
+
+            } catch (ex) {
+                console.log(ex);
+            }
+
+        });
+
+        function LoadLessionClick(index_lesson_text) {
+
+            try {
+
+                console.log("click on " + index_lesson_text);
+
+                var index_lesson = parseInt(index_lesson_text);
+
+                if (lessons_clicked.includes(index_lesson)) {
+                    console.log("La lezione con ID " + index_lesson_text + " è già stata caricata ...");
+                } else {
+
+                    // Text
+                    var text_file_name = json_lesson_response.lessons[index_lesson].text;
+                    console.log("loading text " + text_file_name + "....");
+
+                    LoadLessonText(index_lesson, text_file_name);
+
+                    // Questions
+                    var question_file_name = json_lesson_response.lessons[index_lesson].questions;
+                    console.log("loading questions " + question_file_name + "....");
+                    LoadQuestions(index_lesson, question_file_name);
+
+                    lessons_clicked.push(index_lesson);
+
+                }
+
+                console.log(lessons_clicked);
+
+            } catch (ex) {
+                console.log(ex);
+                $('#js').text("Si è verificato un errore durante il caricamento delle lezioni.");
+            }
+        }
+
+    </script>
+
+
+</body>
+
+</html>
