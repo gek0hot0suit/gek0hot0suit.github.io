@@ -1,17 +1,17 @@
 {
   "lessons": [
     {
-      "date": "12/09/2023",
+      "date": "23/09/2023",
       "title": "Lezione 1",
       "text": "1.html",
-      "text_made_by": "Paolino Paperino",
-      "questions": "1_questions.json"
+      "text_made_by": "Giacomo Boscolo_ NO_SKAM",
+      "questions": "Cosa è una Lan"
     },
     {
       "date": "15/09/2022",
       "title": "Lezione 2",
       "text": "2.html",
-      "text_made_by": "Paolino Paperino",
+      "text_made_by": "Giacomo Boscolo_ NO_SKAM",
       "questions": "2_questions.json"
     }
   ]
